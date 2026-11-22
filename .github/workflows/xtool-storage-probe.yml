@@ -1,0 +1,40 @@
+name: Where xtool stores data
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: macos-latest
+    steps:
+      - name: Install xtool
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/xtool.zip" https://github.com/xtool-org/xtool/releases/download/1.24.0/xtool.app.zip
+          unzip -q "$RUNNER_TEMP/xtool.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/xtool.app/Contents/Resources/bin" >> "$GITHUB_PATH"
+
+      - name: Log in
+        timeout-minutes: 3
+        env:
+          KEY_ID: ${{ secrets.APPLE_SIGN_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APPLE_SIGN_ISSUER_ID }}
+          KEY_P8: ${{ secrets.APPLE_SIGN_KEY_P8 }}
+        run: |
+          set -eu
+          umask 077
+          printf '%s\n' "$KEY_P8" > "$RUNNER_TEMP/key.p8"
+          ( sleep 3; printf '%s\n' "$KEY_ID"; sleep 2; printf '%s\n' "$ISSUER_ID"; sleep 2; printf '%s\n' "$RUNNER_TEMP/key.p8"; sleep 10 ) \
+            | script -q /dev/null xtool auth login --mode key
+          rm -f "$RUNNER_TEMP/key.p8"
+
+      - name: List where xtool keeps data (names only)
+        run: |
+          echo "-- files named like xtool or XTL under HOME"
+          find "$HOME" -maxdepth 7 \( -iname '*xtool*' -o -name 'XTL*' \) -not -path '*/_temp/*' -not -path '*/_work/*' 2>/dev/null | head -30
+          echo "-- keychain entries (account and service names only)"
+          security dump-keychain 2>/dev/null | grep -a -E '"(acct|svce)"' | grep -ai -E 'xtl|xtool' | head -20
+          echo "-- persistent dir candidates"
+          for d in "$HOME/Library/Application Support/xtool" "$HOME/.config/xtool" "$HOME/.local/share/xtool" "$HOME/Library/Group Containers"; do [ -e "$d" ] && { echo "$d"; ls -la "$d" | head -12; }; done
