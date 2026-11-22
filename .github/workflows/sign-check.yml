@@ -46,5 +46,20 @@ jobs:
           cd Hello
           sed -i '' 's/com\.example\.Hello/com.chibifire.hellosigncheck/' xtool.yml
           cat xtool.yml
+          cat > App.entitlements <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>com.apple.developer.healthkit</key>
+              <true/>
+          </dict>
+          </plist>
+          PLIST
+          echo 'entitlementsPath: App.entitlements' >> xtool.yml
+          cat xtool.yml
           xtool dev build --sign
-          find . -name '*.app' -maxdepth 4
+          APP=$(find . -name '*.app' -maxdepth 4 | head -n 1)
+          echo "app: $APP"
+          codesign -d --entitlements - "$APP" 2>&1 | grep -a -A1 "healthkit"
+          security cms -D -i "$APP/embedded.mobileprovision" | grep -a -A1 "healthkit"
