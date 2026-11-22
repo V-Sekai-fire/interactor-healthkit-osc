@@ -1,0 +1,4 @@
+version: 1
+bundleID: com.chibifire.heartrateosc
+entitlementsPath: App.entitlements
+infoPath: Info.plist

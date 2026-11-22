@@ -17,6 +17,7 @@ int main(void) {
     n = osc_heart_rate_connected(b, sizeof b, 0);              hex("conn_f", b, n);
     n = osc_heart_rate_percent(b, sizeof b, 72.0f / 255.0f);   hex("pct", b, n);
     n = osc_presence(b, sizeof b, 1795382657123ULL, 72.0f, 0.9f, 1800); hex("p", b, n);
+    printf("conf %.4f %.4f %.4f %.4f\n", osc_confidence(0), osc_confidence(30000), osc_confidence(60000), osc_confidence(90000));
     n = osc_heart_rate(b, 8, 72);                              printf("small %zu\n", n);
     return 0;
 }

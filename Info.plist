@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDisplayName</key>
+    <string>Heart Rate OSC</string>
+    <key>NSHealthShareUsageDescription</key>
+    <string>Reads your heart rate to send it to VRChat and the character controller.</string>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Sends the heart rate to the PC on your network.</string>
+</dict>
+</plist>

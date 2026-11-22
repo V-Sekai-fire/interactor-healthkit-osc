@@ -26,6 +26,9 @@ size_t osc_heart_rate_percent(uint8_t *buf, size_t cap, float fraction);
 size_t osc_presence(uint8_t *buf, size_t cap, uint64_t sample_unix_ms,
                     float bpm, float confidence, int32_t age_ms);
 
+// How far to trust a sample from its age: 1 when fresh, falling in a line to 0 at one minute.
+float osc_confidence(int32_t age_ms);
+
 // Send one packet over UDP to host:port. Returns 0 on success, -1 on failure.
 int osc_udp_send(const char *host, uint16_t port, const uint8_t *buf, size_t len);
 
