@@ -1,0 +1,193 @@
+asyncapi: 3.1.0
+info:
+  title: Heart rate to VRChat OSC
+  version: 0.1.0
+  description: >
+    Send heart-rate values from the phone app to VRChat as OSC avatar
+    parameters, and to the character controller as the derived input P. The
+    app sends. VRChat ignores any parameter the avatar does not have.
+  license:
+    name: MIT
+    url: https://opensource.org/license/mit
+  x-status: draft
+  x-open:
+    - The scale of HRPercent is set here as heart rate divided by 255. Other
+      bridges may scale it by another maximum.
+    - An avatar only reacts to a parameter it declares with the same name and
+      type.
+    - HRV is not sent. It arrives from the watch too rarely to animate with.
+    - The controller address, port and the address /presence/P are not chosen
+      with the controller's owner yet.
+    - How the confidence is computed from the age of the sample is not set.
+servers:
+  vrchat:
+    host: "{pcAddress}:9000"
+    protocol: osc
+    description: >
+      VRChat on the PC. It listens for OSC on UDP port 9000. The app never
+      binds that port.
+    variables:
+      pcAddress:
+        description: The address of the PC that runs VRChat.
+        default: 127.0.0.1
+    x-transport: udp
+  controller:
+    host: "{pcAddress}:{controllerPort}"
+    protocol: osc
+    description: >
+      The character controller on the PC. It reads the heart rate as the
+      derived input P. The app never binds that port.
+    variables:
+      pcAddress:
+        description: The address of the PC that runs the controller.
+      controllerPort:
+        description: The UDP port the controller listens on.
+    x-transport: udp
+channels:
+  heartRate:
+    address: /avatar/parameters/HR
+    description: The heart rate in beats per minute.
+    servers:
+      - $ref: "#/servers/vrchat"
+    messages:
+      heartRate:
+        $ref: "#/components/messages/heartRate"
+  heartRateConnected:
+    address: /avatar/parameters/isHRConnected
+    description: True while the app receives heart-rate samples.
+    servers:
+      - $ref: "#/servers/vrchat"
+    messages:
+      heartRateConnected:
+        $ref: "#/components/messages/heartRateConnected"
+  heartRatePercent:
+    address: /avatar/parameters/HRPercent
+    description: The heart rate as a fraction of 255.
+    servers:
+      - $ref: "#/servers/vrchat"
+    messages:
+      heartRatePercent:
+        $ref: "#/components/messages/heartRatePercent"
+  derivedHeartRate:
+    address: /presence/P
+    description: >
+      The heart rate for the controller, with how far to trust it. Send it as
+      an OSC bundle whose time tag is the sample time, so it lines up with
+      tracking frames and can serve as the real-data reference.
+    servers:
+      - $ref: "#/servers/controller"
+    messages:
+      derivedHeartRate:
+        $ref: "#/components/messages/derivedHeartRate"
+operations:
+  sendHeartRate:
+    action: send
+    summary: Send the heart rate.
+    description: Send one value for each new sample, about once a second.
+    channel:
+      $ref: "#/channels/heartRate"
+    messages:
+      - $ref: "#/channels/heartRate/messages/heartRate"
+  sendHeartRateConnected:
+    action: send
+    summary: Send whether samples are arriving.
+    description: Send true on the first sample and false when samples stop.
+    channel:
+      $ref: "#/channels/heartRateConnected"
+    messages:
+      - $ref: "#/channels/heartRateConnected/messages/heartRateConnected"
+  sendHeartRatePercent:
+    action: send
+    summary: Send the heart rate as a fraction.
+    description: Send one value with each heart rate.
+    channel:
+      $ref: "#/channels/heartRatePercent"
+    messages:
+      - $ref: "#/channels/heartRatePercent/messages/heartRatePercent"
+  sendDerivedHeartRate:
+    action: send
+    summary: Send the heart rate to the controller.
+    description: >
+      Send one message for each new sample. Send confidence 0 when no sample
+      has arrived for a while, so the controller masks the input.
+    channel:
+      $ref: "#/channels/derivedHeartRate"
+    messages:
+      - $ref: "#/channels/derivedHeartRate/messages/derivedHeartRate"
+components:
+  messages:
+    derivedHeartRate:
+      name: derivedHeartRate
+      title: Heart rate for the controller
+      summary: The heart rate, its confidence and the age of the sample.
+      description: >
+        The first argument is beats per minute. The second is the confidence
+        from 0 to 1, where 0 means masked. The third is the age of the sample
+        in milliseconds when it is sent.
+      contentType: application/osc
+      x-osc:
+        typeTags: ",ffi"
+      payload:
+        type: array
+        prefixItems:
+          - type: number
+            minimum: 0
+            maximum: 255
+          - type: number
+            minimum: 0
+            maximum: 1
+          - type: integer
+            minimum: 0
+        items: false
+        minItems: 3
+      examples:
+        - payload: [72, 0.9, 1800]
+    heartRate:
+      name: heartRate
+      title: Heart rate
+      summary: One heart rate in beats per minute.
+      contentType: application/osc
+      x-osc:
+        typeTags: ",i"
+      payload:
+        type: array
+        prefixItems:
+          - type: integer
+            minimum: 0
+            maximum: 255
+        items: false
+        minItems: 1
+      examples:
+        - payload: [72]
+    heartRateConnected:
+      name: heartRateConnected
+      title: Heart rate connected
+      summary: Whether samples are arriving.
+      contentType: application/osc
+      x-osc:
+        typeTags: ",T or ,F"
+      payload:
+        type: array
+        prefixItems:
+          - type: boolean
+        items: false
+        minItems: 1
+      examples:
+        - payload: [true]
+    heartRatePercent:
+      name: heartRatePercent
+      title: Heart rate fraction
+      summary: The heart rate divided by 255.
+      contentType: application/osc
+      x-osc:
+        typeTags: ",f"
+      payload:
+        type: array
+        prefixItems:
+          - type: number
+            minimum: 0
+            maximum: 1
+        items: false
+        minItems: 1
+      examples:
+        - payload: [0.282]
