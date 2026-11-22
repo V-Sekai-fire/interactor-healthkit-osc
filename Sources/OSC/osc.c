@@ -88,6 +88,12 @@ size_t osc_presence(uint8_t *buf, size_t cap, uint64_t sample_unix_ms,
     return finish(&w);
 }
 
+float osc_confidence(int32_t age_ms) {
+    if (age_ms <= 0) return 1.0f;
+    if (age_ms >= 60000) return 0.0f;
+    return 1.0f - (float)age_ms / 60000.0f;
+}
+
 int osc_udp_send(const char *host, uint16_t port, const uint8_t *buf, size_t len) {
     char service[8];
     struct addrinfo hints, *res = NULL;

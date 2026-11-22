@@ -1,0 +1,4 @@
+.build/
+xtool/
+.sourcekit-lsp/
+.swiftpm/
