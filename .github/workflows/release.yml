@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 1
+
+      - name: Tag as a Go pseudo-version and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          stamp=$(TZ=UTC git show -s --format=%cd --date=format-local:%Y%m%d%H%M%S HEAD)
+          tag="v0.0.0-${stamp}-$(git rev-parse --short=12 HEAD)"
+          echo "tag: $tag"
+          if gh release view "$tag" >/dev/null 2>&1; then echo "release $tag already exists"; exit 1; fi
+          gh release create "$tag" spec/asyncapi.yaml --target "$GITHUB_SHA" --title "$tag" --notes "The heart rate OSC contract."
