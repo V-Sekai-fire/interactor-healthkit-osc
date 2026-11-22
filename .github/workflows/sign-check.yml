@@ -24,9 +24,9 @@ jobs:
       - name: Log in with the App Store Connect key
         timeout-minutes: 3
         env:
-          KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
-          ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
-          KEY_P8: ${{ secrets.APPLE_NOTARY_KEY_P8 }}
+          KEY_ID: ${{ secrets.APPLE_SIGN_KEY_ID }}
+          ISSUER_ID: ${{ secrets.APPLE_SIGN_ISSUER_ID }}
+          KEY_P8: ${{ secrets.APPLE_SIGN_KEY_P8 }}
         run: |
           set -eu
           umask 077
