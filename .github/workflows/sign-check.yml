@@ -19,9 +19,10 @@ jobs:
         run: |
           curl -fsSL -o "$RUNNER_TEMP/xtool.zip" https://github.com/xtool-org/xtool/releases/download/1.24.0/xtool.app.zip
           unzip -q "$RUNNER_TEMP/xtool.zip" -d "$RUNNER_TEMP"
-          echo "$RUNNER_TEMP/xtool.app/Contents/MacOS" >> "$GITHUB_PATH"
+          echo "$RUNNER_TEMP/xtool.app/Contents/Resources/bin" >> "$GITHUB_PATH"
 
       - name: Log in with the App Store Connect key
+        timeout-minutes: 3
         env:
           KEY_ID: ${{ secrets.APPLE_NOTARY_KEY_ID }}
           ISSUER_ID: ${{ secrets.APPLE_NOTARY_ISSUER_ID }}
@@ -37,6 +38,7 @@ jobs:
           xtool auth status
 
       - name: Make and sign a hello-world app
+        timeout-minutes: 15
         run: |
           set -eu
           cd "$RUNNER_TEMP"
